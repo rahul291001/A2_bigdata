@@ -46,6 +46,7 @@ trips_extended = FOREACH full_join GENERATE
 STORE trips_extended INTO '/Output/enriched_trips' USING PigStorage('\t');
 
 -- Task 3: Aggregation
+-- Inputs trips_extended from Task 2
 com_group = GROUP trips_extended BY (company_id, name);
 
 com_data = FOREACH com_group {
@@ -54,6 +55,7 @@ com_data = FOREACH com_group {
     avg_dist   = AVG(trips_extended.dist);
     avg_fare   = AVG(trips_extended.fare);
 
+    -- Doing 2 decimals using multiply /ROUND/divide method
     total_distance_km = (double)ROUND(total_dist * 100.0) / 100.0;
     avg_distance_km   = (double)ROUND(avg_dist * 100.0) / 100.0;
     avg_fare_2dp      = (double)ROUND(avg_fare * 100.0) / 100.0;
@@ -67,6 +69,7 @@ com_data = FOREACH com_group {
         (double)avg_fare_2dp       AS avg_fare;
 };
 
+-- Sort ascending by trip_count, then ascending company_name (tie-breaker)  
 company_stats = ORDER com_data BY trip_count ASC, company_name ASC;
 
 STORE company_stats INTO '/Output/company_stats' USING PigStorage('\t');
