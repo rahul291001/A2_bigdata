@@ -71,15 +71,14 @@ company_stats = ORDER com_data BY trip_count ASC, company_name ASC;
 
 STORE company_stats INTO '/Output/company_stats' USING PigStorage('\t');
 
--- Task 4: UDF for Fare Binning
--- registering the UDF by loading the python file that contains fare_band() function 
--- getting the data from task 2 called trip_extended and apply the fare_band UDF to classify each fare into LOW, MID, or HIGH
--- group all trips by company id and company name
--- then for each group company, filter trips into fare of LOW, MID, and HIGH and count them
--- finally store the results into HDFS
 
+-- Task 4: UDF for Fare Binning
+
+-- registering the UDF by loading the python file that contains fare_band() function 
 REGISTER 'fare_band.py' USING jython AS myfuncs;
 
+-- getting the data from task 2 called trip_extended 
+-- and apply the fare_band UDF to classify each fare into LOW, MID, or HIGH
 trips_banded = FOREACH trips_extended GENERATE
     taxi_id,
     company_id,
@@ -87,9 +86,11 @@ trips_banded = FOREACH trips_extended GENERATE
     fare,
     myfuncs.fare_band(fare) as fare_level;
 
-
+-- group all trips by company id and company name
 grouped_com = GROUP trips_banded BY (company_id, name);
 
+
+-- for each group company, filter trips into fare of LOW, MID, and HIGH and count them
 fare_bands_by_company = FOREACH grouped_com {
     LOW = FILTER trips_banded BY fare_level == 'LOW';
     MID = FILTER trips_banded BY fare_level == 'MID';
@@ -101,8 +102,9 @@ fare_bands_by_company = FOREACH grouped_com {
         COUNT(LOW) AS LOW_count,
         COUNT(MID) AS MID_count,
         COUNT(HIGH)AS HIGH_count;
-}
+};
 
+-- finally store the results into HDFS
 STORE fare_bands_by_company INTO '/Output/fare_bands_by_company' USING PigStorage('\t');
 
 
