@@ -1,6 +1,8 @@
 @outputSchema("fare_level:chararray")
+# classified fare of trip into catogories called LOW, MID, and HIGH
 def fare_band(fare):
     try:
+# convert input to float for comparison
         f = float(fare)
         if f <= 15:
             return "LOW"
@@ -8,5 +10,6 @@ def fare_band(fare):
             return "MID"
         else:
             return "HIGH"
+# handle invalid or missing input
     except:
         return "UNKNOWN"
